@@ -1,6 +1,6 @@
-"use client"
+"use client";
 import Link from "next/link";
-import  { useState,useEffect } from "react";
+import { useState, useEffect } from "react";
 import Image from "next/image";
 import {
   FaSearch,
@@ -18,30 +18,47 @@ const locations = [
   "Guwahati", "Jodhpur", "Coimbatore", "Vijayawada", "Madurai",
 ];
 
-const Header = () => {
+const Navbar = () => {
   const [isCategoryOpen, setIsCategoryOpen] = useState(false);
   const [isLocationOpen, setIsLocationOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedLocation, setSelectedLocation] = useState("Select Location");
-  const [user, setUser] = useState(null);
-
-  useEffect(() => {
-    const storedUser = JSON.parse(localStorage.getItem("user"));
-    if (storedUser) setUser(storedUser);
-  }, []);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [user, setUser] = useState(null);
+  const [categories, setCategories] = useState([]);
 
   useEffect(() => {
-    const token = localStorage.getItem("authToken");
-    if (token) {
+    const token = localStorage.getItem("token");
+    const storedUser = localStorage.getItem("user");
+    if (token && storedUser) {
       setIsAuthenticated(true);
+      setUser(JSON.parse(storedUser));
     }
   }, []);
 
   const handleLogout = () => {
-    localStorage.removeItem("authToken");
+    localStorage.removeItem("token");
+    localStorage.removeItem("user");
     setIsAuthenticated(false);
+    setUser(null);
+    window.location.href = "/"; // redirect after logout
+
   };
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const res = await fetch("http://localhost:5000/api/product/categories");
+        const data = await res.json();
+        setCategories(data);
+      } catch (err) {
+        console.error("Failed to fetch categories:", err);
+      }
+    };
+
+    fetchCategories();
+  }, []);
+
+
 
 
   return (
@@ -49,28 +66,37 @@ const Header = () => {
       <div className="container flex items-center">
         {/* Logo */}
         <div className="flex items-center space-x-2">
-          <Image
-            src="/Images/logo.png"
-            alt="Calcutta Fresh Foods Logo"
-            width={300}
-            height={30}
-            className="h-40"
-          />
-        </div>
-
-        {/* Search Bar */}
-        <div className="flex-grow mx-4">
-          <div className="relative">
-            <input
-              type="text"
-              className="w-full border border-gray-300 rounded-b-smpy-2 px-4 pl-10 focus:outline-none focus:ring-2 focus:ring-green-500 h-20"
-              placeholder="Search for Products..."
+          <Link href="/" passHref>
+            <Image
+              src="/Images/logo.png"
+              alt="Calcutta Fresh Foods Logo"
+              width={300}
+              height={30}
+              className="h-40 cursor-pointer"
             />
-            <FaSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
-          </div>
+          </Link>
         </div>
 
-        {/* Location and Login */}
+        {/* Search */}
+        <div className="flex-grow mx-4 relative">
+          <input
+            type="text"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="w-full border border-gray-300 rounded-md px-4 pl-10 focus:outline-none focus:ring-2 focus:ring-green-500 h-12"
+            placeholder="Search for Products..."
+          />
+          {searchTerm.trim() && (
+            <Link
+              href={`/Pages/Search?query=${encodeURIComponent(searchTerm)}`}
+              className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"
+            >
+              🔍
+            </Link>
+          )}
+        </div>
+
+        {/* Location and Login/Profile */}
         <div className="flex items-center space-x-4">
           {/* Location Dropdown */}
           <div className="relative">
@@ -114,28 +140,32 @@ const Header = () => {
             )}
           </div>
 
-          {/* Login/Profile */}
+          {/* Login/Profile or Logout */}
           {isAuthenticated ? (
-        <div className="flex items-center gap-4">
-          {/* Profile Icon */}
-          <Link href="/Pages/Profile">
-            <img
-              src="/profile-icon.png" // Change this to an actual profile picture URL
-              alt="Profile"
-              className="w-10 h-10 rounded-full cursor-pointer"
-            />
+            <div className="flex items-center gap-4">
+              <Link href="/Pages/Profile">
+                <img
+                  src="/profile-icon.png"
+                  alt="Profile"
+                  className="w-10 h-10 rounded-full cursor-pointer"
+                />
+              </Link>
+              <button
+                onClick={handleLogout}
+                className="bg-red-500 text-white px-4 py-2 rounded"
+              >
+                Logout
+              </button>
+            </div>
+          ) : (
+            <Link href="/Pages/Login">
+              <button className="bg-blue-500 text-white px-4 py-2 rounded">Login</button>
+            </Link>
+          )}
+          <Link href="/Pages/OrderHistory">
+            <button className="text-sm text-blue-600 hover:underline">My Orders</button>
           </Link>
-          
-          {/* Logout Button */}
-          <button onClick={handleLogout} className="bg-red-500 text-white px-4 py-2 rounded">
-            Logout
-          </button>
-        </div>
-      ) : (
-        <Link href="/Pages/Login">
-          <button className="bg-blue-500 text-white px-4 py-2 rounded">Login</button>
-        </Link>
-      )}
+
           <Link href="/Pages/Cart">
             <button className="bg-red-500 text-white rounded-full py-2 px-4">
               <FaShoppingCart />
@@ -154,26 +184,27 @@ const Header = () => {
             <span>Shop by Category</span>
             <FaChevronDown />
           </button>
-          {/* Dropdown Menu */}
           {isCategoryOpen && (
             <div className="absolute left-0 mt-2 w-56 bg-white border border-gray-200 shadow-md rounded-md">
               <ul className="py-2">
-                <li className="px-4 py-2 hover:bg-gray-100 cursor-pointer">
-                  Exclusive Fish & Meat
-                </li>
-                <li className="px-4 py-2 hover:bg-gray-100 cursor-pointer">
-                  Fish & Seafood
-                </li>
-                <li className="px-4 py-2 hover:bg-gray-100 cursor-pointer">
-                  Mutton
-                </li>
-                <li className="px-4 py-2 hover:bg-gray-100 cursor-pointer">
-                  Poultry
-                </li>
-                <li className="px-4 py-2 hover:bg-gray-100 cursor-pointer">
-                  Steak & Fillets
-                </li>
+                {[
+                  "Exclusive Fish & Meat",
+                  "Fish & Seafood",
+                  "Mutton",
+                  "Poultry",
+                  "Steak & Fillets",
+                ].map((category) => (
+                  <li key={category}>
+                    <Link
+                      href={`/Pages/Category?name=${encodeURIComponent(category)}`}
+                      className="block px-4 py-2 hover:bg-gray-100 cursor-pointer"
+                    >
+                      {category}
+                    </Link>
+                  </li>
+                ))}
               </ul>
+
             </div>
           )}
         </div>
@@ -182,4 +213,4 @@ const Header = () => {
   );
 };
 
-export default Header;
+export default Navbar;

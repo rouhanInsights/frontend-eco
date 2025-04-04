@@ -11,8 +11,8 @@ export const CartProvider = ({ children }) => {
   // Add product to cart
   const addToCart = (product, selectedOption, quantity) => {
     const newItem = {
-      id: `${product.id}-${selectedOption.label}`, // Unique ID for different options
-      name: product.title,
+      id: `${product.id}-${selectedOption.label}`,
+      name: product.name, 
       image: product.image,
       option: selectedOption.label,
       price: selectedOption.price,

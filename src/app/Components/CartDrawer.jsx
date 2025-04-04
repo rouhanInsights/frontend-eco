@@ -9,9 +9,8 @@ const CartDrawer = () => {
 
   return (
     <div
-      className={`fixed top-0 right-0 w-80 h-full bg-white shadow-lg transform ${
-        isCartOpen ? "translate-x-0" : "translate-x-full"
-      } transition-transform duration-300 ease-in-out z-50`}
+      className={`fixed top-0 right-0 w-80 h-full bg-white shadow-lg transform ${isCartOpen ? "translate-x-0" : "translate-x-full"
+        } transition-transform duration-300 ease-in-out z-50`}
     >
       {/* Header */}
       <div className="flex justify-between items-center p-4 border-b">
@@ -28,7 +27,7 @@ const CartDrawer = () => {
         ) : (
           cart.map((item, index) => (
             <div key={index} className="flex items-center border p-2 rounded-lg shadow-sm">
-              <img src={item.image} alt={item.name} className="w-14 h-14 object-cover rounded-lg" />
+              <img src={item.image} alt={item.name} className="w-14 h-14 object-cover rounded-lg" onError={(e) => (e.target.src = "/fallback.png")} />
               <div className="ml-3 flex-1">
                 <h3 className="text-sm font-semibold">{item.name} ({item.option})</h3>
                 <div className="flex items-center space-x-2">
@@ -46,7 +45,9 @@ const CartDrawer = () => {
                     <FaPlus className="w-4 h-4" />
                   </button>
                 </div>
-                <p className="text-green-600 font-semibold">₹{(item.price * item.quantity).toFixed(2)}</p>
+                <p className="text-green-600 font-semibold">
+                  ₹{(item.price * item.quantity).toFixed(2)}
+                </p>
               </div>
               <button onClick={() => removeFromCart(item.id, item.option)} className="text-red-600 hover:text-red-800">
                 <FaTrash className="w-5 h-5" />

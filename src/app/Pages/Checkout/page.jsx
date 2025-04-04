@@ -4,13 +4,13 @@ import { useState } from "react";
 import { useCart } from "../../Components/CartContext";
 import Navbar from "@/app/Components/Navbar";
 import Footer from "@/app/Components/Footer";
+import DeliverySlotSelector from "@/app/Components/DeliverySlotSelector";
 import Link from "next/link";
 import Image from "next/image";
 
 const Checkout = () => {
   const { cart } = useCart();
-  const [selectedDate, setSelectedDate] = useState("");
-  const [selectedTime, setSelectedTime] = useState("");
+  const [deliverySlot, setDeliverySlot] = useState({ date: "", time: "" });
 
   const calculateTotal = () => {
     return cart.reduce((total, item) => total + item.price * item.quantity, 0);
@@ -19,7 +19,11 @@ const Checkout = () => {
   const discount = 40; // Example discount
   const totalAmount = calculateTotal();
   const payableAmount = totalAmount - discount;
-  
+  const handlePlaceOrder = () => {
+    console.log("Selected Date:", deliverySlot.date);
+    console.log("Selected Time Slot:", deliverySlot.time);
+    // Send deliverySlot.date & time with your order payload
+  };
 
   return (
     <>
@@ -31,7 +35,7 @@ const Checkout = () => {
             <h2 className="text-xl font-semibold mb-4">Select a delivery option</h2>
             {cart.length > 0 && (
               <div className="flex items-center p-4 bg-gray-50 rounded-lg shadow">
-                <Image src={cart[0].image} alt={cart[0].name} width={50} height={50} />
+                <Image src={cart[0].image} alt={`Image of ${cart[0].name}`}  width={50} height={50} />
                 <div className="ml-4">
                   <button className="border p-2 text-sm rounded">View {cart.length} Item(s)</button>
                 </div>
@@ -39,17 +43,7 @@ const Checkout = () => {
             )}
             <div className="mt-4 p-4 bg-gray-50 rounded-lg shadow">
               <label className="block font-medium">Delivery Slot</label>
-              <select
-                className="w-full p-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400"
-                value={selectedTime}
-                onChange={(e) => setSelectedTime(e.target.value)}
-              >
-                <option value="">Select a time slot</option>
-                <option value="10:00 AM - 12:00 PM">10:00 AM - 12:00 PM</option>
-                  <option value="12:00 PM - 2:00 PM">12:00 PM - 2:00 PM</option>
-                  <option value="2:00 PM - 4:00 PM">2:00 PM - 4:00 PM</option>
-                  <option value="4:00 PM - 6:00 PM">4:00 PM - 6:00 PM</option>
-              </select>
+              <DeliverySlotSelector onSlotSelect={setDeliverySlot} />
             </div>
             <div className="mt-4">
               <Link href="/payment">
