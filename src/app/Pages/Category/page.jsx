@@ -1,23 +1,31 @@
-"use client";
-import { useSearchParams } from "next/navigation";
-import { useEffect, useState } from "react";
+'use client';
 
-const Category = () => {
+import { useSearchParams } from "next/navigation";
+import { useEffect, useState, Suspense } from "react";
+
+export const dynamic = 'force-dynamic'; // Prevents static build crash
+
+const CategoryContent = () => {
   const searchParams = useSearchParams();
   const category = searchParams.get("name");
   const [products, setProducts] = useState([]);
 
   useEffect(() => {
     if (!category) return;
-  
-    const fetchProducts = async () => {
-      const res = await fetch(`http://localhost:5000/api/products/category?name=${encodeURIComponent(category)}`);
 
-      const data = await res.json();
-      console.log("Category Products Response:", data); // 👀 check this
-      setProducts(data);
+    const fetchProducts = async () => {
+      try {
+        const res = await fetch(
+          `http://localhost:5000/api/products/category?name=${encodeURIComponent(category)}`
+        );
+        const data = await res.json();
+        console.log("Category Products Response:", data);
+        setProducts(data);
+      } catch (err) {
+        console.error("Failed to fetch category products", err);
+      }
     };
-  
+
     fetchProducts();
   }, [category]);
 
@@ -30,7 +38,11 @@ const Category = () => {
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           {products.map((item) => (
             <div key={item.product_id} className="border p-4 rounded shadow">
-              <img src={item.image_url} alt={item.name} className="w-full h-40 object-cover mb-2" />
+              <img
+                src={item.image_url}
+                alt={item.name}
+                className="w-full h-40 object-cover mb-2"
+              />
               <h3 className="text-lg font-semibold">{item.name}</h3>
               <p>₹{item.price}</p>
             </div>
@@ -41,4 +53,10 @@ const Category = () => {
   );
 };
 
-export default Category;
+export default function CategoryPage() {
+  return (
+    <Suspense fallback={<div>Loading category...</div>}>
+      <CategoryContent />
+    </Suspense>
+  );
+}

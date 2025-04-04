@@ -1,8 +1,11 @@
-"use client";
-import { useEffect, useState } from "react";
+'use client';
+
+import { useEffect, useState, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 
-const SearchPage = () => {
+export const dynamic = 'force-dynamic'; // Prevents static rendering crash
+
+const SearchContent = () => {
     const searchParams = useSearchParams();
     const query = searchParams.get("query");
     const [results, setResults] = useState([]);
@@ -14,13 +17,12 @@ const SearchPage = () => {
             try {
                 const res = await fetch(`http://localhost:5000/api/products/search?q=${encodeURIComponent(query)}`);
                 const data = await res.json();
-                console.log("Search response:", data); // 🔍 Inspect API response
+                console.log("Search response:", data);
 
-                // Ensure results is an array before setting state
                 setResults(Array.isArray(data) ? data : []);
             } catch (error) {
                 console.error("Error fetching search results:", error);
-                setResults([]); // Avoid errors if the request fails
+                setResults([]);
             }
         };
 
@@ -42,9 +44,14 @@ const SearchPage = () => {
                     ))}
                 </div>
             )}
-
         </div>
     );
 };
 
-export default SearchPage;
+export default function SearchPage() {
+    return (
+        <Suspense fallback={<div>Loading search results...</div>}>
+            <SearchContent />
+        </Suspense>
+    );
+}
