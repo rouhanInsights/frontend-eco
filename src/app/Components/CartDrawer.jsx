@@ -29,7 +29,7 @@ const CartDrawer = () => {
             <div key={index} className="flex items-center border p-2 rounded-lg shadow-sm">
               <img src={item.image} alt={item.name} className="w-14 h-14 object-cover rounded-lg" onError={(e) => (e.target.src = "/fallback.png")} />
               <div className="ml-3 flex-1">
-                <h3 className="text-sm font-semibold">{item.name} ({item.option})</h3>
+                <h3 className="text-sm font-semibold">{item.name} </h3>
                 <div className="flex items-center space-x-2">
                   <button
                     onClick={() => adjustQuantity(item.id, item.option, item.quantity - 1)}

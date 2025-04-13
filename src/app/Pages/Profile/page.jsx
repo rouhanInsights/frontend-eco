@@ -1,16 +1,23 @@
 "use client";
 import React, { useEffect, useState } from "react";
-import { useRouter } from "next/navigation"; // Redirect users if needed
+import Link from "next/link";
+import Navbar from "@/app/Components/Navbar";
 
 const Profile = () => {
-  const router = useRouter();
-  const [form, setForm] = useState({ name: "", email: "", phone: "" });
-  const [loading, setLoading] = useState(true);
+  const [form, setForm] = useState({
+    name: "",
+    alternate_email: "",
+    phone: ""
+  });
+
+  const [addresses, setAddresses] = useState([]);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
+  const [loading, setLoading] = useState(true);
+
+  const token = typeof window !== "undefined" ? localStorage.getItem("token") : null;
 
   useEffect(() => {
-    const token = localStorage.getItem("token");
     if (!token) {
       setError("Unauthorized: Please log in.");
       setLoading(false);
@@ -20,59 +27,89 @@ const Profile = () => {
     const fetchProfile = async () => {
       try {
         const res = await fetch("http://localhost:5000/api/users/profile", {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
+          headers: { Authorization: `Bearer ${token}` }
         });
-
-        if (res.status === 401) {
-          setError("Session expired. Please log in again.");
-          localStorage.removeItem("token");
-          return router.push("/login");
-        }
-
         const data = await res.json();
-        if (res.ok) setForm(data);
+        if (res.ok) {
+          setForm({
+            name: data.name || "",
+            alternate_email: data.alternate_email || "",
+            phone: data.phone || ""
+          });
+        }
       } catch (err) {
-        setError("Failed to fetch profile.");
+        setError("Failed to load profile");
       }
-      setLoading(false);
+    };
+
+    const fetchAddresses = async () => {
+      try {
+        const res = await fetch("http://localhost:5000/api/users/addresses", {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        const data = await res.json();
+        if (res.ok) {
+          setAddresses(data);
+        }
+      } catch (err) {
+        console.error("Failed to load addresses", err);
+      }
     };
 
     fetchProfile();
-  }, [router]);
+    fetchAddresses();
+    setLoading(false);
+  }, [token]);
 
-  const handleChange = (e) =>
-    setForm({ ...form, [e.target.name]: e.target.value });
+  const handleChange = (e) => setForm({ ...form, [e.target.name]: e.target.value });
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    const token = localStorage.getItem("token");
-
-    if (!token) {
-      setError("Unauthorized: Please log in.");
-      return;
-    }
-
     try {
       const res = await fetch("http://localhost:5000/api/users/profile", {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
+          Authorization: `Bearer ${token}`
         },
-        body: JSON.stringify(form),
+        body: JSON.stringify(form)
       });
-
       const data = await res.json();
       if (res.ok) {
         setMessage("Profile updated successfully!");
-        localStorage.setItem("user", JSON.stringify(data.user)); // Update localStorage
       } else {
         setError(data.error || "Update failed");
       }
     } catch (err) {
-      setError("An error occurred while updating.");
+      setError("Error updating profile");
+    }
+  };
+
+  const setAsDefault = async (addressId) => {
+    try {
+      const res = await fetch(`http://localhost:5000/api/users/addresses/${addressId}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify({ is_default: true })
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setMessage("Default address updated.");
+        // Refetch addresses to reflect changes
+        const updated = await fetch("http://localhost:5000/api/users/addresses", {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        const updatedData = await updated.json();
+        setAddresses(updatedData);
+      } else {
+        setError(data.error || "Failed to update default address");
+      }
+    } catch (err) {
+      console.error("Default address error", err);
+      setError("Failed to set default address");
     }
   };
 
@@ -80,39 +117,79 @@ const Profile = () => {
   if (error) return <p className="text-red-600">{error}</p>;
 
   return (
-    <div className="max-w-xl mx-auto mt-12 p-6 bg-white shadow-md rounded-lg">
-      <h2 className="text-2xl font-bold mb-6 text-center">Your Profile</h2>
-      <form onSubmit={handleSubmit} className="space-y-4">
-        <input
-          name="name"
-          value={form.name || ""}
-          onChange={handleChange}
-          className="w-full border p-2 rounded-lg"
-          placeholder="Name"
-        />
-        <input
-          name="email"
-          type="email"
-          value={form.email || ""}
-          onChange={handleChange}
-          className="w-full border p-2 rounded-lg"
-          placeholder="Email"
-          disabled // Prevent users from editing email
-        />
-        <input
-          name="phone"
-          value={form.phone || ""}
-          onChange={handleChange}
-          className="w-full border p-2 rounded-lg"
-          placeholder="Phone"
-        />
-        <button type="submit" className="w-full bg-green-600 text-white py-2 rounded-lg hover:bg-green-700 transition">
-          Save Changes
-        </button>
-      </form>
-      {message && <p className="mt-4 text-green-600">{message}</p>}
-      {error && <p className="mt-4 text-red-600">{error}</p>}
-    </div>
+    <>
+      <Navbar />
+      <div className="min-h-screen flex flex-col items-center justify-start bg-gray-100 pt-60 px-4">
+        <div className="w-full max-w-2xl bg-white p-6 shadow-md rounded-xl">
+          <h2 className="text-2xl font-bold mb-4">Update Profile</h2>
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <input
+              type="text"
+              name="name"
+              value={form.name}
+              onChange={handleChange}
+              placeholder="Full Name"
+              className="w-full p-3 border rounded-lg"
+            />
+            <input
+              type="email"
+              name="alternate_email"
+              value={form.alternate_email}
+              onChange={handleChange}
+              placeholder="Alternate Email"
+              className="w-full p-3 border rounded-lg"
+            />
+            <input
+              type="text"
+              name="phone"
+              value={form.phone}
+              onChange={handleChange}
+              placeholder="Phone"
+              className="w-full p-3 border rounded-lg"
+            />
+            <button
+              type="submit"
+              className="w-full bg-blue-600 text-white font-semibold py-2 rounded-lg"
+            >
+              Save Changes
+            </button>
+            {message && <p className="text-green-600 text-center">{message}</p>}
+          </form>
+        </div>
+
+        {/* Saved Addresses */}
+        <div className="w-full max-w-2xl mt-8 bg-white p-6 shadow-md rounded-xl">
+          <div className="flex justify-between items-center mb-4">
+            <h2 className="text-xl font-semibold">Saved Addresses</h2>
+            <Link href="/Pages/AddAddress" className="text-blue-600 font-medium underline">Add New</Link>
+          </div>
+          {addresses.length === 0 ? (
+            <p className="text-gray-500">No addresses saved yet.</p>
+          ) : (
+            addresses.map((addr) => (
+              <div
+                key={addr.address_id}
+                className={`border p-4 rounded-lg mb-3 ${addr.is_default ? "bg-green-50 border-green-400" : ""}`}
+              >
+                <p className="font-bold">{addr.name} ({addr.phone})</p>
+                <p>{addr.address_line1}, {addr.address_line2}, {addr.address_line3}</p>
+                <p>{addr.city}, {addr.state} - {addr.pincode}</p>
+                {addr.is_default ? (
+                  <p className="text-sm text-green-600 font-medium">Default Address</p>
+                ) : (
+                  <button
+                    onClick={() => setAsDefault(addr.address_id)}
+                    className="mt-2 text-sm text-blue-600 underline"
+                  >
+                    Set as Default
+                  </button>
+                )}
+              </div>
+            ))
+          )}
+        </div>
+      </div>
+    </>
   );
 };
 

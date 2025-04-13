@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useState ,useEffect} from "react";
 
 const OtpLogin = () => {
   const [step, setStep] = useState(1);
@@ -26,6 +26,15 @@ const OtpLogin = () => {
       setError("❌ Error sending OTP");
     }
   };
+  const [countdown, setCountdown] = useState(60);
+
+  useEffect(() => {
+    let timer;
+    if (step === 2 && countdown > 0) {
+      timer = setTimeout(() => setCountdown(countdown - 1), 1000);
+    }
+    return () => clearTimeout(timer);
+  }, [step, countdown]);
 
   const verifyOtp = async () => {
     try {
@@ -109,6 +118,11 @@ const OtpLogin = () => {
               Verify OTP
             </button>
           </>
+        )}
+        {step === 2 && countdown > 0 && (
+          <p className="text-sm text-gray-500 mt-2 text-center">
+            You can resend OTP in {countdown}s
+          </p>
         )}
 
         {message && <p className="mt-4 text-green-600 text-center">{message}</p>}

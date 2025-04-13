@@ -51,7 +51,7 @@ const Navbar = () => {
         const data = await res.json();
         setCategories(data);
       } catch (err) {
-        console.error("Failed to fetch categories:", err);
+        // console.error("Failed to fetch categories:", err);
       }
     };
 
@@ -78,23 +78,26 @@ const Navbar = () => {
         </div>
 
         {/* Search */}
-        <div className="flex-grow mx-4 relative">
+        <form
+          action={`/Pages/Search`} // base path
+          method="GET"
+          className="flex-grow mx-4 relative"
+        >
           <input
             type="text"
+            name="query" // important for query param!
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="w-full border border-gray-300 rounded-md px-4 pl-10 focus:outline-none focus:ring-2 focus:ring-green-500 h-12"
             placeholder="Search for Products..."
           />
-          {searchTerm.trim() && (
-            <Link
-              href={`/Pages/Search?query=${encodeURIComponent(searchTerm)}`}
-              className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"
-            >
-              🔍
-            </Link>
-          )}
-        </div>
+
+          {/* Visual Search Icon (not clickable) */}
+          <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 pointer-events-none">
+            🔍
+          </span>
+        </form>
+
 
         {/* Location and Login/Profile */}
         <div className="flex items-center space-x-4">
@@ -145,9 +148,9 @@ const Navbar = () => {
             <div className="flex items-center gap-4">
               <Link href="/Pages/Profile">
                 <img
-                  src="/profile-icon.png"
+                  src={user?.image_url ? user.image_url : "/Images/profile.jpg"}
                   alt="Profile"
-                  className="w-10 h-10 rounded-full cursor-pointer"
+                  className="w-10 h-10 rounded-full cursor-pointer object-cover"
                 />
               </Link>
               <button

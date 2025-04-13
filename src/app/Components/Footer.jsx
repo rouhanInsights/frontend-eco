@@ -45,7 +45,6 @@ const Footer = () => {
             <a className=' hover:text-red-500' href="#"><FaFacebookF size={24} /></a>
             <a className=' hover:text-red-500'href="#"><FaInstagram size={24} /></a>
             <a className=' hover:text-red-500'href="#"><FaTwitter size={24} /></a>
-            <a className=' hover:text-red-500'href="#"><FaPinterest size={24} /></a>
           </div>
         </div>
       </div>

@@ -4,7 +4,7 @@ import Head from "next/head";
 import { FaChevronLeft, FaChevronRight } from "react-icons/fa";
 import CartDrawer from "./CartDrawer";
 import { useCart } from "./CartContext";
-
+import Link from "next/link";
 function TopOffers() {
   const [items, setItems] = useState([]);
   const [startIndex, setStartIndex] = useState(0);
@@ -54,31 +54,26 @@ function TopOffers() {
   };
 
   const handleAddToCart = (item) => {
-    const selectedWeight = selectedWeights[item.product_id];
     const quantity = quantities[item.product_id];
-  
-    const weightPriceMap = {
-      "1kg": item.price,
-      "500gm": item.price / 2,
-      "250gm": item.price / 4,
-    };
-  
-    const price = weightPriceMap[selectedWeight] || item.price;
-  
 
+    // Determine the effective price: use sale_price if available and lower than price
+    const basePrice = item.sale_price && item.sale_price < item.price
+      ? item.sale_price
+      : item.price;
+
+    // We use a default option label since there's no weight dropdown
     addToCart(
       {
         id: item.product_id,
         name: item.name,
         image: item.image_url,
       },
-      { label: selectedWeight, price },
+      {  price: basePrice },
       quantity
     );
   };
-
   return (
-    <div className="pt-95 bg-gradient-to-b from-green-100 e min-h-screen">
+    <div className="pt-10 bg-gradient-to-b from-green-100 e min-h-screen">
       <Head>
         <title>All Products</title>
       </Head>
@@ -96,26 +91,34 @@ function TopOffers() {
               key={item.product_id}
               className="w-80 min-h-[500px] p-4 border rounded-lg shadow-xl flex flex-col items-center text-center bg-white hover:shadow-2xl transition-transform transform hover:scale-105"
             >
-              <img
-                src={item.image_url}
-                alt={item.name}
-                className="w-full h-48 object-cover rounded-md"
-              />
-              <h2 className="text-2xl font-bold mt-3 text-gray-800">{item.name}</h2>
-              <select
-                className="mt-2 border rounded-md p-1 text-lg"
-                value={selectedWeights[item.product_id]}
-                onChange={(e) =>
-                  setSelectedWeights((prev) => ({
-                    ...prev,
-                    [item.product_id]: e.target.value,
-                  }))
-                }
-              >
-                <option value="1kg">1kg - ₹{item.price}</option>
-                <option value="500gm">500gm - ₹{item.price / 2}</option>
-                <option value="250gm">250gm - ₹{item.price / 4}</option>
-              </select>
+                <Link href={`/Products/${item.product_id}`}>
+                <div className="cursor-pointer flex flex-col items-center text-center">
+                  <img
+                    src={item.image_url}
+                    alt={item.name}
+                    className="w-full h-70 object-cover rounded-md"
+                  />
+                  <h2 className="text-2xl font-bold mt-3 text-gray-800">
+                    {item.name}
+                  </h2>
+                  <p className="mt-2 text-lg">
+                    {item.sale_price && item.sale_price < item.price ? (
+                      <>
+                        <span className="line-through text-gray-400 mr-2">
+                          ₹{Number(item.price).toFixed(2)}
+                        </span>
+                        <span className="text-red-600 font-bold">
+                          ₹{Number(item.sale_price).toFixed(2)}
+                        </span>
+                      </>
+                    ) : (
+                      <span className="text-gray-800 font-semibold">
+                        ₹{Number(item.price).toFixed(2)}
+                      </span>
+                    )}
+                  </p>
+                </div>
+              </Link>
               <div className="flex items-center mt-3">
                 <button
                   onClick={() => decreaseQuantity(item.product_id)}

@@ -11,10 +11,9 @@ export const CartProvider = ({ children }) => {
   // Add product to cart
   const addToCart = (product, selectedOption, quantity) => {
     const newItem = {
-      id: `${product.id}-${selectedOption.label}`,
+      id: product.id,
       name: product.name, 
       image: product.image,
-      option: selectedOption.label,
       price: selectedOption.price,
       quantity,
     };
